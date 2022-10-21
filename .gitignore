@@ -1,3 +1,9 @@
+#JManzur
+default.auto.tfvars
+**/modules/refresh_asg/scripts/.env
+**/modules/refresh_asg/scripts/response.json
+**/modules/refresh_asg/output_lambda_zip/*
+
 # Local .terraform directories
 **/.terraform/*
 
