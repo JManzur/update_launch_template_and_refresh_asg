@@ -8,11 +8,11 @@ data "archive_file" "init" {
 
 resource "aws_lambda_function" "asg_lambda" {
   filename      = data.archive_file.init.output_path
-  function_name = "${var.name_prefix}-Lamda"
+  function_name = "${var.name_prefix}-Lambda"
   role          = aws_iam_role.asg_role.arn
   handler       = "main_handler.lambda_handler"
   description   = "Refresh Auto Scaling Group"
-  tags          = { Name = "${var.name_prefix}-Lamda" }
+  tags          = { Name = "${var.name_prefix}-Lambda" }
 
   source_code_hash = filebase64sha256(data.archive_file.init.output_path)
 

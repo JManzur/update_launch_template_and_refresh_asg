@@ -11,6 +11,7 @@ ami_name_regex = os.environ.get('ami_name_regex')
 launch_template_id = os.environ.get('launch_template_id')
 
 now = datetime.utcnow()
+current_date = now.strftime("%d-%m-%Y-%H%M%S")
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -27,7 +28,8 @@ def lambda_handler(event, context):
             Message = 'Current image ID: {}, Latest Golden image ID: {}, No need to update the launch template.'.format(current_ami_id_in_launch_template, latest_golden_ami_id)
             logger.info(Message)
             return {
-                'Message': Message
+                'Message': Message,
+                'UTC_DateTime': current_date
             }
     
         else:
@@ -38,7 +40,8 @@ def lambda_handler(event, context):
             Refresh = refresh_auto_scaling_group(auto_scaling_group_name)
             return {
                 'Message': Message,
-                'InstanceRefreshId': Refresh
+                'InstanceRefreshId': Refresh,
+                'UTC_DateTime': current_date
             }
 
     except Exception as error:
@@ -122,8 +125,6 @@ def describe_launch_template_version(launch_template_id):
     return current_ami_id_in_launch_template
 
 def update_launch_template(launch_template_id, latest_golden_ami_id):
-    current_date = now.strftime("%d-%m-%Y-%H%M%S")
-
     response = ec2.create_launch_template_version(
         LaunchTemplateId='{}'.format(launch_template_id),
         SourceVersion='$Latest',
