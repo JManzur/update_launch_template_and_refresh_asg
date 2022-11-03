@@ -49,7 +49,7 @@ then
 	exit 1
 fi
 
-PS3='Please enter your choice: '
+PS3='Select the action to perform: '
 OPTIONS=("Refresh" "Refresh-With-New-AMI" "Quit")
 select opt in "${OPTIONS[@]}"
 do
