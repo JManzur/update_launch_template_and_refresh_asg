@@ -1,0 +1,1 @@
+{"statusCode": 400, "message": "An error has occurred", "moreInfo": {"Lambda Request ID": "62131147-fbf8-4a95-8b49-7b11d2ad44e9", "CloudWatch log stream name": "2022/11/03/[$LATEST]acdf6345b5a14debb3ca993936c5fc2e", "CloudWatch log group name": "/aws/lambda/Refresh-ASG-Lambda"}}

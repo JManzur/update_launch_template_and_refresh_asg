@@ -58,7 +58,7 @@ resource "aws_iam_policy" "asg_policy" {
 
 # IAM Role (Lambda execution role)
 resource "aws_iam_role" "asg_role" {
-  name               = "LambdaSNS_policy_role"
+  name               = "${var.name_prefix}-Role"
   assume_role_policy = data.aws_iam_policy_document.asg_role_source.json
   tags               = { Name = "${var.name_prefix}-Role" }
 }

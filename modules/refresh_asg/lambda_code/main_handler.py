@@ -1,6 +1,7 @@
 import boto3
-import logging, os
+import logging, os, json
 from datetime import datetime
+from botocore.exceptions import ClientError
 
 ec2 = boto3.client('ec2')
 autoscaling = boto3.client('autoscaling')
@@ -19,28 +20,16 @@ def lambda_handler(event, context):
     logger.info('event: {}'.format(event))
 
     auto_scaling_group_name = event['AutoScalingGroupName']
+    action = event['Action']
     
     try:
-        latest_golden_ami_id = describe_image(ami_platform, ami_name_regex, aws_account_id)
-        current_ami_id_in_launch_template = describe_launch_template_version(launch_template_id)
-
-        if latest_golden_ami_id == current_ami_id_in_launch_template:
-            Message = 'Current image ID: {}, Latest Golden image ID: {}, No need to update the launch template.'.format(current_ami_id_in_launch_template, latest_golden_ami_id)
-            logger.info(Message)
-            return {
-                'Message': Message,
-                'UTC_DateTime': current_date
-            }
-    
+        if action == "Refresh":
+            return refresh_auto_scaling_group(auto_scaling_group_name)
+        elif action == "Refresh-With-New-AMI":
+            return refresh_asg_with_new_ami(auto_scaling_group_name)
         else:
-            logger.info('Current image ID: {}, Latest Golden image ID: {}, The launch template will be updated.'.format(current_ami_id_in_launch_template, latest_golden_ami_id))
-            update_launch_template(launch_template_id, latest_golden_ami_id)
-            set_new_launch_template_version_as_default(launch_template_id)
-            Message = 'Refreshing the Auto Scaling Group {} with the latest Golden AMI {}'.format(auto_scaling_group_name, latest_golden_ami_id)
-            Refresh = refresh_auto_scaling_group(auto_scaling_group_name)
             return {
-                'Message': Message,
-                'InstanceRefreshId': Refresh,
+                'Message': 'Action not recognized, only "Refresh" and "Refresh-With-New-AMI" are allowed',
                 'UTC_DateTime': current_date
             }
 
@@ -56,6 +45,34 @@ def lambda_handler(event, context):
                 'CloudWatch log group name': '{}'.format(context.log_group_name)
                 }
             }
+
+def refresh_asg_with_new_ami(auto_scaling_group_name):
+    logger.info("Executing fucntion: " + refresh_asg_with_new_ami.__name__)
+
+    latest_golden_ami_id = describe_image(ami_platform, ami_name_regex, aws_account_id)
+    current_ami_id_in_launch_template = describe_launch_template_version(launch_template_id)
+
+    if latest_golden_ami_id == current_ami_id_in_launch_template:
+        Message = 'Current image ID: {}, Latest Golden image ID: {}, No need to update the launch template.'.format(current_ami_id_in_launch_template, latest_golden_ami_id)
+        logger.info(Message)
+        return {
+            'Action': 'Refresh-With-New-AMI',
+            'Message': Message,
+            'UTC_DateTime': current_date
+        }
+
+    else:
+        logger.info('Current image ID: {}, Latest Golden image ID: {}, The launch template will be updated.'.format(current_ami_id_in_launch_template, latest_golden_ami_id))
+        update_launch_template(launch_template_id, latest_golden_ami_id)
+        set_new_launch_template_version_as_default(launch_template_id)
+        Message = 'Refreshing the Auto Scaling Group {} with the latest Golden AMI {}'.format(auto_scaling_group_name, latest_golden_ami_id)
+        Refresh = refresh_auto_scaling_group(auto_scaling_group_name)
+        return {
+            'Action': 'Refresh-With-New-AMI',
+            'Message': Message,
+            'InstanceRefreshId': Refresh,
+            'UTC_DateTime': current_date
+        }
 
 def describe_image(ami_platform, ami_name_regex, aws_account_id):
     if ami_platform == 'windows':
@@ -151,5 +168,10 @@ def refresh_auto_scaling_group(auto_scaling_group_name):
         AutoScalingGroupName='{}'.format(auto_scaling_group_name),
         Strategy='Rolling'
     )
+    logger.info(response)
 
-    return response['InstanceRefreshId']
+    return {
+        'Action': 'Refresh',
+        'InstanceRefreshId': '{}'.format(response['InstanceRefreshId']),
+        'UTC_DateTime': current_date
+        }
