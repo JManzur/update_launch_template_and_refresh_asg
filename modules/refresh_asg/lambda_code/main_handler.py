@@ -1,7 +1,6 @@
 import boto3
-import logging, os, json
+import logging, os
 from datetime import datetime
-from botocore.exceptions import ClientError
 
 ec2 = boto3.client('ec2')
 autoscaling = boto3.client('autoscaling')
