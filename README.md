@@ -15,6 +15,7 @@
 | ----------------- |-----------|---------|
 | WSL2 Ubuntu 22.04 | Terraform | v1.3.1  |
 | WSL2 Ubuntu 22.04 | AWS-CLI | v2.7.29  |
+
 ## Initialization How-To:
 
 Located in the root directory, create a file called `default.auto.tfvars` with a content like the following:
@@ -52,6 +53,24 @@ In the `modules/refresh_asg/scprits` folder you will find a file called `invoke_
 invoke_function.sh MyAutoScalingGroup
 ``` 
 
+The lambda must receive two inputs in the event:
+
+```json
+{
+  "Action": "Refresh-With-New-AMI",
+  "AutoScalingGroupName": "Some-ASG-Name"
+}
+```
+
+```json
+{
+  "Action": "Refresh",
+  "AutoScalingGroupName": "Some-ASG-Name"
+}
+```
+
+- :bulb: The "Refresh" action will refresh all instances in the specified Auto Scaling Group, whether new changes are found or not.
+- :bulb: The "Refresh-With-New-AMI" action will refresh all instances in the specified Auto Scaling Group only if a new Golden AMI is found.
 
 ## Author:
 
